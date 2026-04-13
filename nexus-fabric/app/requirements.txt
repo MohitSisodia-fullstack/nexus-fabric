@@ -1,7 +1,12 @@
 streamlit==1.35.0
-openai==1.30.0
-azure-search-documents==11.6.0b4
-azure-core==1.30.0
-pandas==2.1.4
-python-dotenv==1.0.1
-httpx==0.27.0
+openai>=1.30.0
+azure-search-documents>=11.4.0
+azure-core>=1.30.0
+
+# FIXED versions for Python compatibility
+pandas>=2.2.2
+pillow>=10.4.0
+numpy>=1.26.4
+
+# optional (only if used)
+tiktoken
