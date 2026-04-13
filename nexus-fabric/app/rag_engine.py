@@ -24,7 +24,7 @@ SEARCH_KEY           = os.getenv("AZURE_SEARCH_KEY", "")
 SEARCH_INDEX         = os.getenv("AZURE_SEARCH_INDEX", "nexus-fabric-index")
 
 TOP_K                = 5      # chunks to retrieve
-DEMO_MODE            = os.getenv("DEMO_MODE", "false").lower() == "true"
+DEMO_MODE            = False
 
 # ── DEMO DOCUMENTS (used when DEMO_MODE=true) ───────────────────────────────
 DEMO_DOCS = [
@@ -97,15 +97,30 @@ class RAGEngine:
 
     # ── Demo retrieval (keyword only, no Azure) ──────────────────────────────
     def _demo_search(self, query: str) -> list[dict]:
-        query_lower = query.lower()
-        scored = []
-        for doc in DEMO_DOCS:
-            words   = set(query_lower.split())
-            text_l  = doc["chunk_text"].lower()
-            score   = sum(1 for w in words if w in text_l)
-            scored.append({**doc, "score": score, "document_type": "demo"})
-        scored.sort(key=lambda x: x["score"], reverse=True)
-        return scored[:TOP_K]
+     query_lower = query.lower()
+
+     stopwords = {"what", "is", "the", "how", "does", "explain", "a", "an"}
+     words = [w for w in query_lower.split() if w not in stopwords]
+
+     scored = []
+
+     for doc in DEMO_DOCS:
+        text_l = doc["chunk_text"].lower()
+        score = 0
+
+        if "chunk" in query_lower and "chunk" in text_l:
+            score += 10
+        if "pii" in query_lower and "pii" in text_l:
+            score += 10
+        if "search" in query_lower and "search" in text_l:
+            score += 10
+
+        score += sum(2 for w in words if w in text_l)
+
+        scored.append({**doc, "score": score, "document_type": "demo"})
+
+     scored.sort(key=lambda x: x["score"], reverse=True)
+     return scored[:TOP_K]
 
     # ── Generate answer ──────────────────────────────────────────────────────
     def _generate(self, query: str, chunks: list[dict]) -> str:
